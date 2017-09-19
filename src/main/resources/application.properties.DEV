@@ -1,0 +1,10 @@
+# Database
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://carula.crpovsem5ipd.ap-south-1.rds.amazonaws.com:3306/carula
+spring.datasource.username=ajay
+spring.datasource.password=June2017
+
+# file upload
+spring.http.multipart.max-file-size=10MB
+spring.http.multipart.max-request-size=10MB
+dp-file-storage-folder=dp-files
