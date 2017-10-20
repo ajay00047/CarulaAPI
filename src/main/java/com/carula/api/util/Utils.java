@@ -86,8 +86,41 @@ public class Utils {
 		return currentTime;
 	}
 	
+	public static String convertSQLDateString2Timestamp(String dateTime){
+		String currentTime="";
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+		try {
+			
+			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			
+			currentTime = sdf1.format(sdf.parse(dateTime));
+
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return currentTime;
+	}
 	
 	public static String addDate2Seoncds(String dateTime,int seconds){
+		String currentTime="";
+		Calendar calendar = Calendar.getInstance();
+		SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM, yyyy hh:mm a");
+		try {
+			
+			calendar.setTime(sdf.parse(dateTime));
+			calendar.add(Calendar.SECOND, seconds);
+			
+			SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			
+			currentTime = sdf1.format(calendar.getTime());
+
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return currentTime;
+	}
+	
+	public static String convertDateString(String dateTime,int seconds){
 		String currentTime="";
 		Calendar calendar = Calendar.getInstance();
 		SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM, yyyy hh:mm a");
@@ -159,4 +192,8 @@ public class Utils {
 
 	    return dist;
 	    }
+	
+    public static Long currentEpoch(){
+        return new Date().getTime()/1000;
+    }
 }

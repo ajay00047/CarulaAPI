@@ -3,31 +3,40 @@ package com.carula.api.beans;
 public class SignUpRequestBean extends BaseRequestBean{
 
 	private String firstName;
-	private String lastName;
-	private String mobile;
+    private String lastName;
+    private String mobile;
+    private boolean noSignUp;
 
-	public String getFirstName() {
-		return firstName;
-	}
+    public boolean getNoSignUp() {
+        return noSignUp;
+    }
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
+    public void setNoSignUp(boolean noSignUp) {
+        this.noSignUp = noSignUp;
+    }
 
-	public String getLastName() {
-		return lastName;
-	}
+    public String getFirstName() {
+        return firstName;
+    }
 
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
 
-	public String getMobile() {
-		return mobile;
-	}
+    public String getLastName() {
+        return lastName;
+    }
 
-	public void setMobile(String mobile) {
-		this.mobile = mobile;
-	}
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
 
 }

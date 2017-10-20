@@ -110,7 +110,7 @@
 							<goal>copy</goal>
 						</goals>
 						<configuration>
-							<sourceFile>src/main/resources/application.properties.DEV</sourceFile>
+							<sourceFile>src/main/resources/application.properties.${deploy.env}</sourceFile>
 							<destinationFile>${project.build.outputDirectory}/application.properties</destinationFile>
 						</configuration>
 					</execution>

@@ -26,13 +26,13 @@ public class GoogleMapDirectionService {
 		String urlOrigin = URLEncoder.encode(startPoint.latitude + "," + startPoint.longitude, "utf-8");
 		String urlDestination = URLEncoder.encode(dropPoint.latitude + "," + dropPoint.longitude, "utf-8");
 		String postURL = Constants.GOOGLE_MAPS_DIRECTION_API + "origin=" + urlOrigin + "&destination=" + urlDestination
-				+ "&mode=walking" + "&key=" + Constants.GOOGLE_MAPS_DIRECTIONS_API_KEY;
+				+ "&mode=walking&avoid=indoor&alternatives=false" + "&key=" + Constants.GOOGLE_MAPS_DIRECTIONS_API_KEY;
 		System.out.println("postURL : " + postURL);
 		return postURL;
 	}
 
 	public List<Route> getGoogleRoutes(LatLng startPoint, LatLng dropPoint) {
-		List<Route> lstRoutes = null;
+		List<Route> lstRoutes = new ArrayList<Route>();
 		try {
 			String link = createUrl(startPoint, dropPoint);
 			URL url = new URL(link);

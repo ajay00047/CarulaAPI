@@ -1,0 +1,10 @@
+# Database
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/pola
+spring.datasource.username=ajay
+spring.datasource.password=password
+
+# file upload
+spring.http.multipart.max-file-size=10MB
+spring.http.multipart.max-request-size=10MB
+dp-file-storage-folder=dp-files

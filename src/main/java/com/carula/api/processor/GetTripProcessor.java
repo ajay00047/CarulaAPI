@@ -33,6 +33,7 @@ public class GetTripProcessor implements Processor {
 		TripSetUpRequestBean requestBean = (TripSetUpRequestBean) theRequestBean;
 
 		int userId = userDAO.getUserIdFromPassKey(requestBean.getPassKey());
+		int actualTripCount=0;
 
 		requestBean.setUserId(userId);
 
@@ -40,13 +41,14 @@ public class GetTripProcessor implements Processor {
 			List<TripDetailsBean> lstTrips = userDAO.getTrip(requestBean);
 			List<TripDetailsBean> returnTrips = new ArrayList<TripDetailsBean>();
 			if (!lstTrips.isEmpty()) {
-				dataBean.setErrorCode(ErrorCodes.CODE_201);
 
 				// filter trips
 				for (TripDetailsBean trip : lstTrips) {
 					List<LatLng> decodeLatLng = Utils.decodePolyLine(trip.getOverviewPolylines());
-					LatLng point1 = new LatLng(requestBean.getTripDetailsBean().getStartLat(),requestBean.getTripDetailsBean().getStartLong());
-					LatLng point2 = new LatLng(requestBean.getTripDetailsBean().getDropLat(),requestBean.getTripDetailsBean().getDropLong());
+					LatLng point1 = new LatLng(requestBean.getTripDetailsBean().getStartLat(),
+							requestBean.getTripDetailsBean().getStartLong());
+					LatLng point2 = new LatLng(requestBean.getTripDetailsBean().getDropLat(),
+							requestBean.getTripDetailsBean().getDropLong());
 					LatLng closetStartPoint = null;
 					LatLng closetDropPoint = null;
 					int startPos = 1;
@@ -85,29 +87,49 @@ public class GetTripProcessor implements Processor {
 						Route startRoute = getPolyLineFromPoints(point1, closetStartPoint);
 						Route dropRoute = getPolyLineFromPoints(point2, closetDropPoint);
 						if (startRoute != null) {
+							
+							if(startRoute.distance > 5000)
+								continue;
+							
 							trip.setWalkDistanceStart(startRoute.distance);
 							trip.setWalkDurationStart(startRoute.duration);
 							trip.setWalkPolylinesStart(startRoute.overviewPolylines);
-							/*List<LatLng> decodeLatLngStart = Utils.decodePolyLine(startRoute.overviewPolylines);
-							for (LatLng point : decodeLatLngStart) {
-								System.out.println("Start Points : "+point);
-							}*/
+							/*
+							 * List<LatLng> decodeLatLngStart =
+							 * Utils.decodePolyLine(startRoute.overviewPolylines
+							 * ); for (LatLng point : decodeLatLngStart) {
+							 * System.out.println("Start Points : "+point); }
+							 */
 						}
 						if (dropRoute != null) {
+							
+							if(dropRoute.distance > 5000)
+								continue;
+							
 							trip.setWalkDistanceDrop(dropRoute.distance);
 							trip.setWalkDurationDrop(dropRoute.duration);
 							trip.setWalkPolylinesDrop(dropRoute.overviewPolylines);
-							/*List<LatLng> decodeLatLngDrop = Utils.decodePolyLine(dropRoute.overviewPolylines);
-							for (LatLng point : decodeLatLngDrop) {
-								System.out.println("Drop Points : "+point);
-							}*/
+							/*
+							 * List<LatLng> decodeLatLngDrop =
+							 * Utils.decodePolyLine(dropRoute.overviewPolylines)
+							 * ; for (LatLng point : decodeLatLngDrop) {
+							 * System.out.println("Drop Points : "+point); }
+							 */
 						}
 
 						// add filtered trips
-						if (startRoute != null && dropRoute != null)
+						if (startRoute != null && dropRoute != null){
 							returnTrips.add(trip);
-					}
+							actualTripCount++;
+						}
+					} 
+						
 				}
+				if(actualTripCount == 0)
+					dataBean.setErrorCode(ErrorCodes.CODE_202);
+				else
+					dataBean.setErrorCode(ErrorCodes.CODE_201);
+				
 				dataBean.setTrips(returnTrips);
 
 			} else

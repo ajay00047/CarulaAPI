@@ -11,6 +11,10 @@ public class Constants {
 	public final static String carDetailsUrl = "/carDetails";
 	public final static String tripSetUpUrl = "/tripSetUp";
 	public final static String getTripUrl = "/getTrip";
+	public final static String myTripUrl = "/myTrip";
+	public final static String requestTripUrl = "/requestTrip";
+	public final static String tripRequestsUrl = "/tripRequests";
+	public final static String changeTripStatusUrl = "/changeTripStatus";
 	public final static String errorUrl = "/error";
 	
 	//Response Constants
@@ -50,4 +54,7 @@ public class Constants {
 	
 	//google APIs
     public static final String GOOGLE_MAPS_DIRECTION_API = "https://maps.googleapis.com/maps/api/directions/json?";
+    
+    //constants
+    public static final String REQUEST_PENDING="PEN";
 }

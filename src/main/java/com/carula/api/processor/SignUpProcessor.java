@@ -26,9 +26,10 @@ public class SignUpProcessor implements Processor {
 		SignUpRequestBean requestBean = (SignUpRequestBean) theRequestBean;
 		String otp = Utils.generateOTP(6);
 
-		
-		
-		if (userDAO.mobileAlreadyPresent(requestBean.getMobile())) {
+		if(requestBean.getNoSignUp() == true){
+			userDAO.updateName(requestBean);
+			dataBean.setErrorCode(ErrorCodes.CODE_007);
+		}else if (userDAO.mobileAlreadyPresent(requestBean.getMobile())) {
 			dataBean.setErrorCode(ErrorCodes.CODE_700);
 			
 		} else {
