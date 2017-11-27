@@ -28,7 +28,7 @@ public class TripStatusChangeProcessor implements Processor {
 		requestBean.setUserId(userId);
 
 		if (userId > 0) {
-			if (userDAO.changeTripStatus(requestBean))
+			if ("DONE".equals(userDAO.changeTripStatus(requestBean)))
 				dataBean.setErrorCode(ErrorCodes.CODE_007);
 			else
 				dataBean.setErrorCode(ErrorCodes.CODE_400);

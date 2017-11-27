@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -60,9 +61,10 @@ public class UserDAO {
 				new Object[] { bean.getFirstName(), bean.getLastName(), bean.getMobile() });
 		return (count > 0 ? true : false);
 	}
-	
+
 	public boolean updateName(SignUpRequestBean bean) {
-		int count = jdbcTemplate.update(Query.UPDATE_NAME, new Object[] { bean.getFirstName(),bean.getLastName(),bean.getMobile() });
+		int count = jdbcTemplate.update(Query.UPDATE_NAME,
+				new Object[] { bean.getFirstName(), bean.getLastName(), bean.getMobile() });
 		return (count > 0 ? true : false);
 	}
 
@@ -180,18 +182,19 @@ public class UserDAO {
 	public List<TripDetailsBean> getTrip(TripSetUpRequestBean bean) {
 		List<TripDetailsBean> lstBean = new ArrayList<TripDetailsBean>();
 		String seqId = Utils.generateRandomString(7) + Utils.currentEpoch() + Utils.generateOTP(7);
+		String startDateTime = Utils.convertJavaDate2Sqldate(
+				bean.getTripDetailsBean().getDate() + " " + bean.getTripDetailsBean().getTime());
 		try {
-			String startDateTime = Utils.convertJavaDate2Sqldate(
-					bean.getTripDetailsBean().getDate() + " " + bean.getTripDetailsBean().getTime());
-			Object[] args = new Object[] { bean.getUserId(), startDateTime, startDateTime,bean.getUserId() };
-			
+
+			Object[] args = new Object[] { bean.getUserId(), startDateTime, startDateTime, bean.getUserId() };
+
 			lstBean = jdbcTemplate.query(Query.GET_TRIP_BETWEEN_TIME, args, new RowMapper<TripDetailsBean>() {
 
 				@Override
 				public TripDetailsBean mapRow(ResultSet result, int arg1) throws SQLException {
 					TripDetailsBean tripBean = new TripDetailsBean();
 
-					//tripBean.setTripSequenceId(seqId);
+					// tripBean.setTripSequenceId(seqId);
 					tripBean.setTripId(result.getInt(1));
 					tripBean.setTripUserId(result.getInt(2));
 					tripBean.setStart(result.getString(3));
@@ -218,7 +221,7 @@ public class UserDAO {
 					tripBean.setWalkDropLat(bean.getTripDetailsBean().getDropLat());
 					tripBean.setWalkDropLong(bean.getTripDetailsBean().getDropLong());
 					tripBean.setWalkStartDateTime(startDateTime);
-					//car details
+					// car details
 					tripBean.setCompany(result.getString(20));
 					tripBean.setModel(result.getString(21));
 					tripBean.setColor(result.getString(22));
@@ -231,17 +234,27 @@ public class UserDAO {
 		} catch (EmptyResultDataAccessException e) {
 			e.printStackTrace();
 		}
-		
-		for(TripDetailsBean localBean:lstBean){
-			if(!StringUtil.isNullOrBlank(localBean.getTripSequenceId())){
-				seqId = localBean.getTripSequenceId();
-			}
+
+		try {
+			seqId = jdbcTemplate.queryForObject(Query.SELECT_REQUEST_SEQ,
+					new Object[] { bean.getUserId(), Utils.addMinutes2SQLDateString(startDateTime, 120),
+							Utils.addMinutes2SQLDateString(startDateTime, -120) },
+					new RowMapper<String>() {
+
+						@Override
+						public String mapRow(ResultSet result, int arg1) throws SQLException {
+							return result.getString(1);
+						}
+
+					});
+		} catch (EmptyResultDataAccessException e) {
+			seqId = Utils.generateRandomString(7) + Utils.currentEpoch() + Utils.generateOTP(7);
 		}
-		
-		for(TripDetailsBean localBean:lstBean){
+
+		for (TripDetailsBean localBean : lstBean) {
 			localBean.setTripSequenceId(seqId);
 		}
-		
+
 		return lstBean;
 	}
 
@@ -278,16 +291,27 @@ public class UserDAO {
 						tripBean.setStartDateTime(result.getString(13));
 						tripBean.setDropDateTime(result.getString(14));
 						tripBean.setOverviewPolylines(result.getString(15));
-						
-						if (result.getString(16).equals("PEN"))
-							tripBean.setStatus("Scheduled");
-						else if (result.getString(16).equals("ONG"))
-							tripBean.setStatus("Ongoing");
-						else if (result.getString(16).equals("CAN"))
+
+						Date currentDate = new Date();
+
+						if (result.getString(16).equals("CAN"))
 							tripBean.setStatus("Cancelled");
-						else if (result.getString(16).equals("COM"))
-							tripBean.setStatus("Completed");
-						
+						else {
+							if (Utils.convertSQLDateString2JavaDate(tripBean.getStartDateTime())
+									.compareTo(currentDate) > 0)
+								tripBean.setStatus("Scheduled");
+							else if (Utils.convertSQLDateString2JavaDate(tripBean.getStartDateTime())
+									.compareTo(currentDate) < 0
+									&& Utils.convertSQLDateString2JavaDate(tripBean.getDropDateTime())
+											.compareTo(currentDate) > 0) {
+								tripBean.setStatus("Ongoing");
+								updateTripStatus(tripBean.getTripId(), "ONG");
+							} else {
+								tripBean.setStatus("Completed");
+								updateTripStatus(tripBean.getTripId(), "CMP");
+							}
+						}
+
 						tripBean.setRemainingRequests(result.getInt(17));
 
 						return tripBean;
@@ -343,23 +367,27 @@ public class UserDAO {
 						tripBean.setWalkDistanceDrop(result.getInt(32));
 						tripBean.setWalkDurationDrop(result.getInt(33));
 
+						Date currentDate = new Date();
+
 						if (!result.getString(20).equals("CAN")) {
-							if (result.getString(34).equals("CAN"))
-								tripBean.setStatus("Cancelled by You");
-							else if (result.getString(34).equals("PEN"))
+							if (result.getString(34).equals("PEN"))
 								tripBean.setStatus("Requested");
-							else if (result.getString(34).equals("REJ"))
+							else if (result.getString(34).equals("ACP")) {
+								if (Utils.convertSQLDateString2JavaDate(tripBean.getDropDateTime())
+										.compareTo(currentDate) < 0)
+									tripBean.setStatus("Completed");
+								else
+									tripBean.setStatus("Accepted");
+
+							} else if (result.getString(34).equals("PAD"))
+								tripBean.setStatus("Completed & Paid");
+							else
 								tripBean.setStatus("Rejected");
-							else if (result.getString(34).equals("ACP"))
-								tripBean.setStatus("Accepted");
-							else if (result.getString(34).equals("COM"))
-								tripBean.setStatus("Completed");
-							else if (result.getString(34).equals("ONG"))
-								tripBean.setStatus("Ongoing");
+
 						}
 						tripBean.setWalkStartDateTime(result.getString(35));
-						
-						//car details
+
+						// car details
 						tripBean.setCompany(result.getString(36));
 						tripBean.setModel(result.getString(37));
 						tripBean.setColor(result.getString(38));
@@ -494,15 +522,54 @@ public class UserDAO {
 
 	}
 
-	public boolean changeTripStatus(TripStatusChangeRequestBean bean) {
+	public String changeTripStatus(TripStatusChangeRequestBean bean) {
+
+		String returnString = "NOT_DONE";
+
+		Object[] args = new Object[] { bean.getUserId(), bean.getTripId(), bean.getTripRequestId(), bean.getStatus() };
+
 		int count = 0;
 		if (bean.getAction().equals("77")) {
-			Object[] args = new Object[] { bean.getStatus(), bean.getTripId(), bean.getUserId() };
+			args = new Object[] { bean.getStatus(), bean.getTripId(), bean.getUserId() };
 			count = jdbcTemplate.update(Query.UPDATE_TRIP_STATUS_OWNER, args);
+
+			// need to call notification service and sent notifications to users
+
 		} else if (bean.getAction().equals("7")) {
-			Object[] args = new Object[] { bean.getStatus(), bean.getTripId(), bean.getTripRequestId() };
-			count = jdbcTemplate.update(Query.UPDATE_TRIP_STATUS_PASSENGER, args);
+
+			StoredProcedure procedure = new GenericStoredProcedure();
+			procedure.setDataSource(jdbcTemplate.getDataSource());
+			procedure.setSql("proc_change_trips_status");
+			procedure.setFunction(false);
+
+			SqlParameter[] parameters = { new SqlParameter("v_user_id", Types.INTEGER),
+					new SqlParameter("v_trip_id", Types.INTEGER), new SqlParameter("v_trip_request_id", Types.INTEGER),
+					new SqlParameter("v_status", Types.VARCHAR), new SqlOutParameter("OUT_STATUS", Types.VARCHAR) };
+
+			procedure.setParameters(parameters);
+			procedure.compile();
+
+			Map<String, Object> result = procedure.execute(args);
+
+			// need to call notification service and sent notifications to users
+
+			returnString = (String) result.get("OUT_STATUS");
+			if ("DONE".equals(returnString) && "ACP".equals(bean.getStatus())) {
+
+			} else if ("DONE".equals(returnString) && "REJ".equals(bean.getStatus())) {
+
+			}
 		}
+
+		return returnString;
+	}
+
+	public boolean updateTripStatus(long tripId, String status) {
+		int count = 0;
+
+		Object[] args = new Object[] { status, tripId };
+		count = jdbcTemplate.update(Query.UPDATE_TRIP_CURRENT_STATUS, args);
+
 		return (count > 0 ? true : false);
 	}
 }

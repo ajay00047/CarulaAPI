@@ -28,7 +28,7 @@ public class Query {
 			+ " start_date_time, drop_date_time, polylines, concat(us.first_name,' ',us.last_name) full_name,us.dp_path,us.mobile,"
 			+ " cc.company,cc.model,cc.color,cc.no"
 			+ " from owner_trips ot , users us, cars cc where us.user_id=cc.user_id and ot.user_id=us.user_id and ot.user_id!=? "
-			+ " and start_date_time <= ? and drop_date_time >= ? and ot.status not in ('CAN') and ot.trip_id not in ("
+			+ " and start_date_time <= ? and drop_date_time >= ? and ot.status not in ('CAN','CMP') and ot.trip_id not in ("
 			+ " select distinct trip_id from trip_requests tr where tr.req_user_id=? ) ";
 
 	public static final String MY_TRIP_BY_ID_PASSENGER = "select ot.trip_id, ot.user_id, ot.start_location, ot.start_lang, "
@@ -38,7 +38,8 @@ public class Query {
 			+ "tr.trip_request_id,tr.start_loc,tr.start_lat,tr.start_long,tr.drop_loc,tr.drop_lat,tr.drop_long,"
 			+ "tr.walk_polyline_start,tr.walk_polyline_drop,tr.walk_dist_start,tr.walk_duration_start,"
 			+ "tr.walk_dist_drop,tr.walk_duration_drop,tr.status,	tr.start_date_time, cc.company,cc.model,cc.color,cc.no from owner_trips ot , "
-			+ "trip_requests tr, users us, cars cc where us.user_id=cc.user_id and ot.user_id=us.user_id and ot.trip_id=tr.trip_id and tr.req_user_id=? ";
+			+ "trip_requests tr, users us, cars cc where us.user_id=cc.user_id and ot.user_id=us.user_id and ot.trip_id=tr.trip_id and (ot.drop_date_time > (now() + INTERVAL 330 MINUTE) "
+			+ "or (tr.status !='PEN' and tr.status !='REJ') ) and tr.req_user_id=? order by tr.start_date_time desc";
 
 	public static final String MY_TRIP_BY_ID_OWNER = "select trip_id, start_location, start_lang, start_long, "
 			+ " drop_location, drop_lat, drop_long, duration, distance, fare, passengers,remaining_passengers, "
@@ -58,8 +59,12 @@ public class Query {
 	public static final String PROC_REQUEST_TRIP = "{call proc_request_trip(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)}";
 
 	public static final String UPDATE_TRIP_STATUS_OWNER = "update owner_trips set status=? where trip_id=? and user_id=? LIMIT 1";
+	public static final String UPDATE_TRIP_CURRENT_STATUS = "update owner_trips set status=? where trip_id=? LIMIT 1";
 	public static final String UPDATE_TRIP_STATUS_PASSENGER = "update trip_requests set status=? where trip_id=? and trip_request_id=? LIMIT 1";
 	
 	public static final String SELECT_REQUEST_STATUS = "select status from trip_requests where trip_request_id=?";
 	public static final String REMAININ_PASSENGER_COUNT_WITH_LOCK = "select remaining_passengers from owner_trips where trip_id=? for update";
+	
+	public static final String SELECT_REQUEST_SEQ = "select trip_sequence_id from trip_requests where req_user_id=? and "
+			+ "start_date_time between ? and ?";
 }
